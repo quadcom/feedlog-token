@@ -26,6 +26,24 @@ Not the API-key plugin: its session short-circuits `customSession`, so `orgList`
 the `requireOrgMember` routes refuse the agent. That is by design upstream, not a bug to work
 around.
 
+## Layout, and what goes upstream
+
+Two things live here, and they are one feature: the token (server side) and `tools/feedlog-skill`,
+the skill an agent works the board with. The skill is a `SKILL.md`, an endpoint reference and one
+small shell script that speaks to the board's HTTP endpoints with `curl` — no package, no
+dependencies, nothing for a `pnpm install` to reach.
+
+**A repository is not a PR.** `CONTRIBUTING.md` asks for one PR per concern, and the token patch is
+the only half with a general case: small, additive, no existing auth code touched. The skill is a
+client for the board, useful to whoever runs one, but not part of the board itself. So:
+
+- `main` — everything, this fork's working state.
+- `agent-tokens` — the token work alone. **This is the upstream PR branch. Keep it clean.**
+
+Fork-specific things that must NOT ride along into an upstream PR: this file, the
+`/local/` line in `.gitignore`, and `tools/`. `scripts/agent-token-probe.ts` *should* go — it is the
+evidence the feature works, and the nearest thing to a test the project has.
+
 ## Working rules
 
 - **Plan before multi-file changes.** Write the plan down, get it agreed, then write code.
@@ -58,6 +76,12 @@ around.
   no manual step in a deployed container.
 - **Never put a token in a URL.** `server/plugins/access-log.ts` logs each request's path *and*
   query string.
+- **Pushes do not build an image.** GitHub disables Actions on forked repositories, and enabling
+  them via the API was not enough to restore the push trigger. Until someone clicks the enable
+  button in the repository's Actions tab, every image build must be dispatched by hand:
+  `gh workflow run "Publish Docker image" --repo quadcom/feedlog-token --ref main`.
+- **Reading a card uses its slug; writing to it uses its id.** An upstream inconsistency
+  (`GET /api/posts/:postId` matches on `post.slug`, everything else on `post.id`).
 
 ## The server
 
