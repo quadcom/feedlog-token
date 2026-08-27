@@ -28,21 +28,20 @@ around.
 
 ## Layout, and what goes upstream
 
-Two things live here, and they are one feature: the token (server side) and `tools/feedlog-skill`,
-the skill an agent works the board with. The skill is a `SKILL.md`, an endpoint reference and one
-small shell script that speaks to the board's HTTP endpoints with `curl` — no package, no
-dependencies, nothing for a `pnpm install` to reach.
+One thing lives here: the agent token, server side. Anything that *uses* the board belongs to the
+project doing the using — its own credential, its own tooling, in its own repository. Keep this
+fork to the feature itself, so it stays cheap to rebase on upstream.
 
 **A repository is not a PR.** `CONTRIBUTING.md` asks for one PR per concern, and the token patch is
-the only half with a general case: small, additive, no existing auth code touched. The skill is a
-client for the board, useful to whoever runs one, but not part of the board itself. So:
+the only half with a general case: small, additive, no existing auth code touched. The rest is
+fork-private — working notes and local settings nobody upstream should have to read. So:
 
 - `main` — everything, this fork's working state.
 - `agent-tokens` — the token work alone. **This is the upstream PR branch. Keep it clean.**
 
-Fork-specific things that must NOT ride along into an upstream PR: this file, the
-`/local/` line in `.gitignore`, and `tools/`. `scripts/agent-token-probe.ts` *should* go — it is the
-evidence the feature works, and the nearest thing to a test the project has.
+Fork-specific things that must NOT ride along into an upstream PR: this file and the `/local/` line
+in `.gitignore`. `scripts/agent-token-probe.ts` *should* go — it is the evidence the feature works,
+and the nearest thing to a test the project has.
 
 ## Working rules
 
