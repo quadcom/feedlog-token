@@ -36,8 +36,18 @@ fork to the feature itself, so it stays cheap to rebase on upstream.
 the only half with a general case: small, additive, no existing auth code touched. The rest is
 fork-private — working notes and local settings nobody upstream should have to read. So:
 
-- `main` — everything, this fork's working state.
+- `main` — everything, this fork's working state. Deployed from here.
 - `agent-tokens` — the token work alone. **This is the upstream PR branch. Keep it clean.**
+- `fix/word-wrap` — an unrelated upstream bug, open as PR #27 there.
+
+**Cut every PR branch from `upstream/main`, never from `main`.** `main` now carries more than one
+concern, so a branch started there quietly drags the others into the PR. `agent-tokens` predates
+this rule and was cut from `main`; it is clean only because `main` held nothing else at the time.
+Rebuild it from `upstream/main` if it ever needs redoing.
+
+Merge fixes *into* `main`, never between PR branches — merging into `main` cannot contaminate a
+sibling. Prefer a merge over a cherry-pick so the commit id matches the one upstream sees, and the
+history reconciles when they take the patch.
 
 Fork-specific things that must NOT ride along into an upstream PR: this file and the `/local/` line
 in `.gitignore`. `scripts/agent-token-probe.ts` *should* go — it is the evidence the feature works,
