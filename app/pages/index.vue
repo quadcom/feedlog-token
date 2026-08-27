@@ -448,7 +448,7 @@ async function handleVote(post: PostListItem) {
           </div>
 
           <!-- Excerpt -->
-          <p class="text-sm text-muted-foreground line-clamp-2 break-all">
+          <p class="text-sm text-muted-foreground line-clamp-2 break-words">
             {{ p.excerpt }}
           </p>
 
