@@ -168,7 +168,7 @@ async function main() {
 
   // Escalation control — better-auth's own org endpoints sit outside FeedLog's
   // gates, so a manager could otherwise invite members and change roles. This
-  // is what the sso-session-guard extension blocks.
+  // is what the sso-auth-guard extension blocks.
   await step('cannot reach org management', async () => {
     const { status } = await req('/api/auth/organization/invite-member', {
       method: 'POST',

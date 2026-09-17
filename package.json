@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build && mkdir -p .output/server/db && cp -r server/db/migrations .output/server/db/migrations",
+    "build": "NODE_OPTIONS=\"--max-old-space-size=4096 $NODE_OPTIONS\" nuxt build && mkdir -p .output/server/db && cp -r server/db/migrations .output/server/db/migrations",
     "build:cf": "NITRO_PRESET=cloudflare-module pnpm build",
     "build:vercel": "pnpm migrate && NITRO_PRESET=vercel pnpm build",
     "deploy:cf": "wrangler deploy --cwd .output",
@@ -42,6 +42,7 @@
     "nuxt": "^4.3.1",
     "openai": "^6.34.0",
     "pgvector": "^0.2.1",
+    "pinyinlite": "^1.2.1",
     "postgres": "^3.4.9",
     "reka-ui": "^2.9.0",
     "shadcn-nuxt": "2.4.3",

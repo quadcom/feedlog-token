@@ -14,6 +14,20 @@ const avatarError = ref(false)
 watch(user, () => { avatarError.value = false })
 
 const showChangePassword = ref(false)
+const { isOpen: showLoginModal, open: openLoginModal } = useLoginModal()
+
+// An SSO session belongs in the dashboard but may not touch the global user
+// record. Keep the entry visible; hiding it reads as a broken page.
+const isSsoSession = computed(
+  () => !!(session.value as { session?: { ssoOrgId?: string | null } } | null)?.session?.ssoOrgId,
+)
+function onChangePassword() {
+  if (isSsoSession.value) {
+    openLoginModal(LOCAL_AUTH_REASON)
+    return
+  }
+  showChangePassword.value = true
+}
 
 async function handleSignOut() {
   await signOut()
@@ -166,7 +180,7 @@ const developerOpen = ref(developerNav.value.some(item => route.path.startsWith(
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem @click="showChangePassword = true">
+              <DropdownMenuItem @click="onChangePassword">
                 <Icon name="lucide:key-round" size="16" class="mr-2" />
                 {{ $t('nav.changePassword') }}
               </DropdownMenuItem>
@@ -285,7 +299,7 @@ const developerOpen = ref(developerNav.value.some(item => route.path.startsWith(
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem @click="showChangePassword = true">
+            <DropdownMenuItem @click="onChangePassword">
               <Icon name="lucide:key-round" size="16" class="mr-2" />
               {{ $t('nav.changePassword') }}
             </DropdownMenuItem>
@@ -312,5 +326,6 @@ const developerOpen = ref(developerNav.value.some(item => route.path.startsWith(
     </main>
 
     <ChangePasswordDialog v-model:open="showChangePassword" />
+    <LoginModal v-model:open="showLoginModal" />
   </div>
 </template>

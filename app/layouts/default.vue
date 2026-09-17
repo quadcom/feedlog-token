@@ -18,20 +18,16 @@ const user = computed(() => isGuest.value ? undefined : session.value?.user)
 // next claims all over again. Claiming on load puts it in the realm that lives
 // long enough to finish, and every sign-in path ends in one.
 if (hasAccount.value) claimIfPending()
-// SSO sessions (signed in via the customer's product) are end-user only.
+// An SSO session carries its real member role inside its org, but may not change
+// the global user record — hence the password entry re-prompts.
 const isSsoSession = computed(
   () => !!(session.value as { session?: { ssoOrgId?: string | null } } | null)?.session?.ssoOrgId,
 )
-// Dashboard entry visibility matches the /dashboard middleware: any org
-// member (owner / manager / contributor) gets in. Do NOT gate on
-// `user.role === 'admin'` — that's the legacy better-auth admin plugin
-// field, no longer consulted now that access is driven by org-membership
-// role.
 const orgCtx = useOrgContext()
-// An SSO session is end-user only and can never reach the dashboard (server
-// gates 403, /dashboard middleware redirects). Hide the entry too so we don't
-// dangle a link that dead-ends — even if this email is an org member.
-const canEnterDashboard = computed(() => !!user.value && !!orgCtx.value.role && !isSsoSession.value)
+// Matches the /dashboard middleware: any org member gets in, SSO included — its
+// orgList holds only the minting org, so a role here can only mean a role there.
+// Do NOT gate on `user.role === 'admin'`: legacy better-auth admin plugin field.
+const canEnterDashboard = computed(() => !!user.value && !!orgCtx.value.role)
 
 // User initials as avatar fallback
 const initials = computed(() => {
@@ -43,17 +39,28 @@ const initials = computed(() => {
 const avatarError = ref(false)
 watch(user, () => { avatarError.value = false })
 
-const { isOpen: showLoginModal } = useLoginModal()
+const { isOpen: showLoginModal, open: openLoginModal } = useLoginModal()
 const showChangePassword = ref(false)
 
-// SSO sessions can't manage credentials — the backend blocks set/change-password
-// etc. Hide the control instead of offering an action that 403s.
+// Kept visible and asking for a direct sign-in when used: hiding them reads as a
+// broken page to the people most likely to arrive this way.
+function onChangePassword() {
+  if (isSsoSession.value) {
+    openLoginModal(LOCAL_AUTH_REASON)
+    return
+  }
+  showChangePassword.value = true
+}
 
-const navItems = [
+const portalOrg = usePortalOrg()
+const navItems = computed(() => [
   { key: 'nav.feedback', to: '/', icon: 'lucide:message-square' },
   { key: 'nav.roadmap', to: '/roadmap', icon: 'lucide:map' },
   { key: 'nav.changelog', to: '/changelog', icon: 'lucide:newspaper' },
-]
+  ...(portalOrg.value.modules.helpCenter
+    ? [{ key: 'nav.helpCenter', to: '/help', icon: 'lucide:book-open' }]
+    : []),
+])
 
 async function handleSignOut() {
   await signOut()
@@ -147,7 +154,7 @@ watch(() => route.path, () => { mobileNavOpen.value = false })
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem v-if="!isSsoSession" @click="showChangePassword = true">
+              <DropdownMenuItem @click="onChangePassword">
                 <Icon name="lucide:key-round" size="16" class="mr-2" />
                 {{ $t('nav.changePassword') }}
               </DropdownMenuItem>

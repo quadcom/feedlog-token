@@ -13,7 +13,7 @@ The whole feature is: `shared/constants/agent.ts`, `server/db/schemas/agent.ts`,
 `server/utils/agent-token.ts`, `server/api/developer/agent-tokens/*`,
 `app/pages/dashboard/developer/agent-tokens.vue`, `app/composables/useAgentTokens.ts`, plus
 one-line additions to `server/db/schemas/index.ts`, `app/composables/useDashboardNav.ts` and
-`server/middleware/sso-session-guard.ts`, and a new i18n namespace.
+`server/utils/sso-auth-guard.ts`, and a new i18n namespace.
 
 **`server/utils/auth.ts` is deliberately untouched, and should stay that way.** An agent token is
 an ordinary better-auth session presented as `Authorization: Bearer <token>`, and the `bearer()`

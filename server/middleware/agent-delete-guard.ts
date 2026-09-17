@@ -11,7 +11,7 @@ import { isAgentEmail } from '#layers/feedlog/shared/constants/agent'
 // withdrawing it takes effect on the very next call.
 //
 // Enforced here rather than in the route handlers for the same reason
-// sso-session-guard blocks by path prefix: a list of routes to protect stays
+// sso-auth-guard blocks by path prefix: a list of routes to protect stays
 // correct as routes are added, whereas a check sprinkled through handlers
 // silently misses the next one.
 

@@ -37,6 +37,12 @@ export {
   message,
 } from './widget'
 export type { WidgetCustomRule } from './widget'
+export {
+  helpCollection,
+  helpArticle,
+  helpCollectionRelations,
+  helpArticleRelations,
+} from './help'
 import { user, session, account, organization, member, invitation } from './auth'
 
 // Custom type for pgvector's vector column

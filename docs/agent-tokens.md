@@ -77,7 +77,7 @@ Three limits, each enforced in a different place and for a different reason.
 
 **Never an owner.** The role choice excludes it.
 
-**Never manages people.** `server/middleware/sso-session-guard.ts` blocks agent identities from
+**Never manages people.** `server/utils/sso-auth-guard.ts` blocks agent identities from
 better-auth's own `/api/auth/organization/*` and `/api/auth/admin/*` endpoints. Those sit outside
 FeedLog's `requireOrg*` gates, so a `manager`-level agent could otherwise invite members and change
 roles — including its own. Agents join the SSO and guest identities already blocked there.

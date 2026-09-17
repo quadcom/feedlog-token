@@ -2,7 +2,7 @@ import { betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, anonymous, bearer, customSession, organization } from 'better-auth/plugins'
 import { defu } from 'defu'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { db } from '../db'
 import { member, organization as orgTable, user as userTable } from '../db/schemas'
@@ -98,7 +98,11 @@ const emailVerification = hasEmailProvider
 // Build the orgList shape attached to every session via customSession plugin.
 // Cookie cache (60s) keeps this off the DB hot path; ≤60s staleness on role
 // changes is acceptable.
-async function loadOrgList(userId: string) {
+//
+// `confineToOrgId` exists for product-SSO sessions: the asserting org signs
+// whatever email it likes, so an unfiltered list would answer "which other orgs
+// does this person belong to, and as what?" for any address it cares to guess.
+async function loadOrgList(userId: string, confineToOrgId?: string | null) {
   const rows = await db
     .select({
       orgId: orgTable.id,
@@ -109,7 +113,11 @@ async function loadOrgList(userId: string) {
     })
     .from(member)
     .innerJoin(orgTable, eq(member.organizationId, orgTable.id))
-    .where(eq(member.userId, userId))
+    .where(
+      confineToOrgId
+        ? and(eq(member.userId, userId), eq(member.organizationId, confineToOrgId))
+        : eq(member.userId, userId),
+    )
   return rows
 }
 
@@ -233,7 +241,8 @@ export function buildAuthConfig(overrides: AuthConfigOverrides = {}): BetterAuth
       }),
       organization(orgOpts),
       customSession(async ({ user, session }) => {
-        const orgList = await loadOrgList(user.id)
+        const ssoOrgId = (session as { ssoOrgId?: string | null }).ssoOrgId
+        const orgList = await loadOrgList(user.id, ssoOrgId)
         return { user, session, orgList }
       }),
       ...(overrides.extraPlugins ?? []),
