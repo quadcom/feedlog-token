@@ -40,9 +40,11 @@ fork-private — working notes and local settings nobody upstream should have to
 - `agent-tokens` — the token work alone. **This is the upstream PR branch. Keep it clean.**
   Rebased onto `upstream/main` on 2026-09-17 and force-pushed; PR #28 is mergeable again.
   Tag `agent-tokens-prerebase` holds what was filed in August.
-- `feat/status-filter` — the board's status filter, already merged into `main`. Fork-private
-  as it stands: it was cut from `main`, so it carries everything else too. Replay the one
-  commit onto a fresh branch off `upstream/main` if it is ever offered upstream.
+- `feat/status-filter` — the board's status filter as merged into `main`. Fork-private: it was
+  cut from `main`, so it carries everything else too. Kept only as the local lineage; it is
+  **not** the branch upstream sees.
+- `feat/board-status-filter` — the same one commit replayed onto `upstream/main`. **This is
+  the PR branch** for the filter, open as PR #34 there.
 
 `fix/word-wrap` is gone — taken upstream as PR #27 and deleted both here and on the fork.
 
