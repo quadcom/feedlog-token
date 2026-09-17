@@ -43,8 +43,7 @@ fork-private — working notes and local settings nobody upstream should have to
 - `feat/board-status-filter` — the board's status filter, replayed onto `upstream/main`.
   **This is the PR branch** for the filter, open as PR #34 there. The filter is already in
   `main` via its own merge; the branch it was merged from (`feat/status-filter`) was cut from
-  `main`, carried everything else with it, and has been deleted locally — it still exists on
-  the fork's GitHub, as history only. Never aim that one upstream.
+  `main` and carried everything else with it, so it has been deleted on both sides.
 
 `fix/word-wrap` is gone — taken upstream as PR #27 and deleted both here and on the fork.
 
