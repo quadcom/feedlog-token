@@ -38,12 +38,17 @@ fork-private — working notes and local settings nobody upstream should have to
 
 - `main` — everything, this fork's working state. Deployed from here.
 - `agent-tokens` — the token work alone. **This is the upstream PR branch. Keep it clean.**
-- `fix/word-wrap` — an unrelated upstream bug, open as PR #27 there.
+  Rebased onto `upstream/main` on 2026-09-17 and force-pushed; PR #28 is mergeable again.
+  Tag `agent-tokens-prerebase` holds what was filed in August.
+- `feat/status-filter` — the board's status filter, already merged into `main`. Fork-private
+  as it stands: it was cut from `main`, so it carries everything else too. Replay the one
+  commit onto a fresh branch off `upstream/main` if it is ever offered upstream.
+
+`fix/word-wrap` is gone — taken upstream as PR #27 and deleted both here and on the fork.
 
 **Cut every PR branch from `upstream/main`, never from `main`.** `main` now carries more than one
-concern, so a branch started there quietly drags the others into the PR. `agent-tokens` predates
-this rule and was cut from `main`; it is clean only because `main` held nothing else at the time.
-Rebuild it from `upstream/main` if it ever needs redoing.
+concern, so a branch started there quietly drags the others into the PR. `agent-tokens` now sits
+on `upstream/main` directly, so the rule holds for it again.
 
 Merge fixes *into* `main`, never between PR branches — merging into `main` cannot contaminate a
 sibling. Prefer a merge over a cherry-pick so the commit id matches the one upstream sees, and the
