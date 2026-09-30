@@ -39,6 +39,15 @@ in `server/db/schemas/index.ts`, `app/layouts/default.vue` and
 `feat/connect-an-app`, cut from `main` because it reuses the agent-token helpers; no upstream PR
 for now (Adrian, 2026-09-30). `auth.ts` stays untouched here too.
 
+**Third, on the same branch: private card attachments** (`local/PLAN-private-attachments.md`).
+Diagnostic files an app attaches to its card, seen only by the author and managers/owners, kept 90
+days. Files: `shared/constants/attachment.ts`, `server/db/schemas/attachment.ts`,
+`server/utils/card-attachment.ts`, `server/api/posts/[postId]/attachments/*`,
+`server/middleware/attachment-files-guard.ts` (**load-bearing**: upstream's `/api/files/**` serves
+any stored path to anyone), `server/plugins/attachment-sweep.ts`,
+`app/components/post/CardAttachments.vue`, one line in `PostDetail.vue`, one pattern each in
+`connect-guard.ts` and `agent-delete-guard.ts`, and the `attachments` i18n namespace.
+
 ## Layout, and what goes upstream
 
 One thing lives here: the agent token, server side. Anything that *uses* the board belongs to the

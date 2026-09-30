@@ -25,6 +25,7 @@ const PROTECTED_DELETE_PATTERNS: RegExp[] = [
   /^\/api\/admin\/boards\/[^/]+$/, // delete a board
   /^\/api\/comments\/[^/]+$/, // delete a comment
   /^\/api\/posts\/[^/]+$/, // delete a card via the public route
+  /^\/api\/posts\/[^/]+\/attachments\/[^/]+$/, // delete a card's private attachment
 ]
 
 function isProtectedDelete(method: string, path: string): boolean {

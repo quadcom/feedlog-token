@@ -21,6 +21,7 @@ const ALLOWED_WRITES: { method: string; re: RegExp }[] = [
   { method: 'POST', re: /^\/api\/posts\/similar$/ }, // similar-cards check
   { method: 'POST', re: /^\/api\/upload$/ }, // a picture for the card
   { method: 'POST', re: /^\/api\/posts\/[^/]+\/comments$/ }, // comment
+  { method: 'POST', re: /^\/api\/posts\/[^/]+\/attachments$/ }, // private diagnostic file
   { method: 'DELETE', re: /^\/api\/connect\/current$/ }, // end this connection
   // Public anyway; allowed so an app that sends its old token on every call can
   // still start a fresh connection.

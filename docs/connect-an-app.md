@@ -131,6 +131,25 @@ the card: `GET /api/posts/<slug>`, and the page `/p/<slug>`).
 
 **Comment.** `POST /api/posts/<id>/comments` `{ "content": "…(1–5000)" }`.
 
+**Attach a private file** (optional, after creating the card). For diagnostic bundles: never shown
+on the public card, in any list or in search; readable only by the card's author and the
+workspace's managers and owners. `POST /api/posts/<id>/attachments`, `multipart/form-data`, field
+`file`. Types `text/plain` (`.txt`, `.log`), `application/json` (`.json`) or `application/zip`
+(`.zip`, and it must really be a zip); the extension must match the type. Up to 5 MB a file, 5 files
+a card, 20 uploads an hour a person (managers and owners exempt). Only on the person's own cards.
+`201`:
+
+```json
+{ "id": "…", "filename": "diagnostics.zip", "contentType": "application/zip", "size": 48213,
+  "createdAt": "…", "expiresAt": "…(90 days on)" }
+```
+
+Files are deleted after 90 days, and with their card. `GET /api/posts/<id>/attachments` lists them
+(`{ data: [ … ] }`) and `GET /api/posts/<id>/attachments/<attachmentId>` downloads one, always as a
+saved file. Anyone who may not see them gets `404`, as if nothing were there. A connected app cannot
+delete an attachment; the person and managers can, from the card page. The app should sanitise
+before uploading: FeedLog stores the bytes as sent and never looks inside.
+
 **Check the connection.** `GET /api/auth/get-session` returns the person's user record while the
 connection is alive, `null` once it is not.
 
@@ -146,6 +165,10 @@ present (stable, for the app to match on).
 | When | Status | `data.code` | `message` |
 |---|---|---|---|
 | 11th card within the hour | `429` | `CONNECT_RATE_LIMITED` | `You have sent 10 reports this hour. Try again later.` |
+| Attachment over 5 MB | `413` | `ATTACHMENT_TOO_LARGE` | `Attachments can be at most 5 MB.` |
+| Attachment of another type, or extension and type disagree | `415` | `ATTACHMENT_TYPE_NOT_ALLOWED` | `Attach a .txt, .log, .json or .zip file.` |
+| 6th attachment on a card | `409` | `ATTACHMENT_LIMIT_REACHED` | `A card can have at most 5 attachments.` |
+| 21st attachment within the hour | `429` | `ATTACHMENT_RATE_LIMITED` | `You have attached 20 files this hour. Try again later.` |
 | Too many starts from one address | `429` | `CONNECT_START_RATE_LIMITED` | `Too many connection attempts. Try again in a few minutes.` |
 | Polling too fast | `429` | `CONNECT_POLL_RATE_LIMITED` | `Polling too fast. Wait the interval between polls.` |
 | Anything a connection may not do | `403` | `CONNECTED_APP_FORBIDDEN` | `A connected app can only read the board, post cards, comments and pictures.` |
@@ -177,9 +200,17 @@ connect page, so they cannot reconnect.
 
 ## Checking it
 
-`scripts/connect-probe.ts` walks the whole contract over HTTP: 40 checks covering the flow, the
-guard's refusals, the card cap, the manager exemption, every way of ending a connection, and a ban
-refusing sign-in. It writes cards and bans a test account, so point it at a scratch database.
+`scripts/connect-probe.ts` walks the whole contract over HTTP: 52 checks covering the flow, the
+guard's refusals, the card cap, the manager exemption, private attachments (who can and cannot
+see them, the limits, and — given `PROBE_DATABASE_URL` — the real file refused on the public file
+route under eight spellings), every way of ending a connection, and a ban refusing sign-in. It
+writes cards and bans a test account, so point it at a scratch database.
+
+How attachments stay private: they live in blob storage under `private-attachments/`, apart from
+the public uploads, and `server/middleware/attachment-files-guard.ts` refuses that folder on
+`/api/files/**` — upstream's route, which serves any stored path to anyone. This assumes the blob
+store itself is not publicly readable (the built-in store, or a private bucket). The hourly sweep in
+`server/plugins/attachment-sweep.ts` deletes files past 90 days and files whose card is gone.
 
 A scratch database needs no server: PGlite (Postgres compiled to WebAssembly, with the `vector` and
 `pg_trgm` extensions this schema needs) behind `@electric-sql/pglite-socket` runs the migrations

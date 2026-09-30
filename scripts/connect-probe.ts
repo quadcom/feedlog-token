@@ -4,9 +4,11 @@
 // The claims being tested: an app can be connected to a person's own account
 // through a sign-in code; the credential it gets posts as that person but is
 // held to reporting whatever their role; ten cards an hour is the cap except for
-// managers; and every way of ending a connection — the person, the app, a
-// manager, a sign-out everywhere, a ban — takes effect on the very next request.
-// Like agent-token-probe.ts, only real requests over the wire can show that.
+// managers; every way of ending a connection — the person, the app, a manager,
+// a sign-out everywhere, a ban — takes effect on the very next request; and a
+// card's private attachments reach its author and staff and nobody else
+// (local/PLAN-private-attachments.md). Like agent-token-probe.ts, only real
+// requests over the wire can show that.
 //
 // Needs three accounts that sign in with email and password: a board user with
 // no workspace role, a second board user (the one who gets banned), and a
@@ -17,7 +19,12 @@
 //   FEEDLOG_URL=http://localhost:3000 \
 //   PROBE_USER=alice@example.com:pass PROBE_USER2=bob@example.com:pass \
 //   PROBE_MANAGER=mgr@example.com:pass [PROBE_OWNER=owner@example.com:pass] \
+//   [PROBE_DATABASE_URL=postgres://...] \
 //   pnpm dlx tsx scripts/connect-probe.ts
+//
+// With PROBE_DATABASE_URL the attachment checks go further: they read a file's
+// real storage key (never sent to any client) to try it on the public file
+// route, and move a file's expiry into the past.
 //
 // It creates about two dozen cards, bans and unbans the second user, and signs
 // the first out everywhere. Run it against a scratch database, never production.
@@ -107,6 +114,15 @@ async function connect(person: Caller, label: string): Promise<{ token: string; 
 function card(n: number) {
   return { title: `Probe card ${n} ${Date.now()}`, content: 'Filed by scripts/connect-probe.ts.', boardId: undefined as string | undefined }
 }
+
+// A file part for multipart uploads.
+function filePart(name: string, type: string, data: Uint8Array | string): FormData {
+  const form = new FormData()
+  form.append('file', new Blob([data], { type }), name)
+  return form
+}
+// The smallest valid zip: an empty archive's end-of-central-directory record.
+const EMPTY_ZIP = Uint8Array.from([0x50, 0x4B, 0x05, 0x06, ...Array.from({ length: 18 }, () => 0)])
 
 const is403 = (r: Res) => r.status === 403 && r.body?.data?.code === 'CONNECTED_APP_FORBIDDEN'
 
@@ -201,6 +217,7 @@ async function main() {
     return { ok: r.status === 200, detail: String(r.status) }
   })
   let postId = ''
+  let postSlug = ''
   await step('create a card, authored by the person', async () => {
     const r = await req('/api/posts', {
       method: 'POST',
@@ -208,6 +225,7 @@ async function main() {
       json: { ...card(1), content: `With a picture: ![screenshot](attachment:${key})`, boardId: bugBoard },
     })
     postId = r.body?.id ?? ''
+    postSlug = r.body?.slug ?? ''
     return { ok: r.status === 201 && r.body?.author?.id === aliceId, detail: `${r.status} ${r.body?.slug}` }
   })
   await step('comment on it', async () => {
@@ -277,6 +295,119 @@ async function main() {
     const moderate = await req(`/api/posts/${postId}`, { method: 'PATCH', as: { token: m.token }, json: { status: 'planned' } })
     return { ok: statuses.every(s => s === 201) && is403(moderate), detail: `${statuses.join(',')}; moderate ${moderate.status}` }
   })
+
+  console.log('\nPrivate attachments')
+  const dbUrl = process.env.PROBE_DATABASE_URL
+  const sql = dbUrl ? (await import('postgres')).default(dbUrl, { max: 1 }) : null
+  const attIds: string[] = []
+  await step('the app attaches a .txt, a .json and a .zip to its own card', async () => {
+    const statuses: number[] = []
+    for (const [name, type, data] of [
+      ['compose-output.txt', 'text/plain', 'line 1\nline 2'],
+      ['versions.json', 'application/json', '{"staxx":"1.0"}'],
+      ['diagnostics.zip', 'application/zip', EMPTY_ZIP],
+    ] as const) {
+      const r = await req(`/api/posts/${postId}/attachments`, { method: 'POST', as: app, body: filePart(name, type, data) })
+      statuses.push(r.status)
+      if (r.body?.id) attIds.push(r.body.id)
+    }
+    return { ok: statuses.every(x => x === 201), detail: statuses.join(',') }
+  })
+  await step('the author and a manager see all three; the download is a forced save', async () => {
+    const a = await req(`/api/posts/${postId}/attachments`, { as: alice })
+    const m = await req(`/api/posts/${postId}/attachments`, { as: mgr })
+    const d = await fetch(`${BASE}/api/posts/${postId}/attachments/${attIds[0]}`, { headers: { Cookie: mgr.cookie! } })
+    const text = await d.text()
+    const ok = a.body?.data?.length === 3 && m.body?.data?.length === 3 && d.status === 200 && text === 'line 1\nline 2'
+      && /^attachment;/.test(d.headers.get('content-disposition') ?? '') && d.headers.get('x-content-type-options') === 'nosniff'
+    return { ok, detail: `author ${a.body?.data?.length}, manager ${m.body?.data?.length}, download ${d.status}` }
+  })
+  await step('another board user and a signed-out visitor get 404 on list and download', async () => {
+    const codes = [
+      (await req(`/api/posts/${postId}/attachments`, { as: bob })).status,
+      (await req(`/api/posts/${postId}/attachments/${attIds[0]}`, { as: bob })).status,
+      (await req(`/api/posts/${postId}/attachments`)).status,
+      (await req(`/api/posts/${postId}/attachments/${attIds[0]}`)).status,
+    ]
+    return { ok: codes.every(c => c === 404), detail: codes.join(',') }
+  })
+  await step('the card and the card list carry no trace of attachments', async () => {
+    const list = (await req('/api/posts?limit=50')).body
+    const detail = await req(`/api/posts/${postSlug}`, { as: mgr })
+    const text = JSON.stringify(list) + JSON.stringify(detail.body)
+    const leaked = /compose-output|versions\.json|diagnostics\.zip|private-attachments/i.test(text)
+    return { ok: detail.status === 200 && !leaked, detail: `card ${detail.status}, leaked=${leaked}` }
+  })
+  await step('wrong type, mismatched extension and a fake zip are refused (415)', async () => {
+    const tries: [string, string, string][] = [
+      ['run.exe', 'application/octet-stream', 'MZ'],
+      ['notes.txt', 'application/zip', 'hello'],
+      ['fake.zip', 'application/zip', 'not a zip'],
+      ['page.html', 'text/html', '<script>'],
+    ]
+    const codes: number[] = []
+    for (const [name, type, data] of tries) {
+      codes.push((await req(`/api/posts/${postId}/attachments`, { method: 'POST', as: app, body: filePart(name, type, data) })).status)
+    }
+    return { ok: codes.every(c => c === 415), detail: codes.join(',') }
+  })
+  await step('over 5 MB is refused (413)', async () => {
+    const big = new Uint8Array(5 * 1024 * 1024 + 10).fill(0x61)
+    const r = await req(`/api/posts/${postId}/attachments`, { method: 'POST', as: app, body: filePart('big.log', 'text/plain', big) })
+    return { ok: r.status === 413 && r.body?.data?.code === 'ATTACHMENT_TOO_LARGE', detail: String(r.status) }
+  })
+  await step('the 6th file on a card is refused (409)', async () => {
+    const codes: number[] = []
+    for (let n = 4; n <= 6; n++) {
+      codes.push((await req(`/api/posts/${postId}/attachments`, { method: 'POST', as: app, body: filePart(`log-${n}.log`, 'text/plain', `log ${n}`) })).status)
+    }
+    return { ok: codes[0] === 201 && codes[1] === 201 && codes[2] === 409, detail: codes.join(',') }
+  })
+  await step('nobody attaches to someone else\'s card (404)', async () => {
+    const other = await req('/api/posts', { method: 'POST', as: bob, json: { ...card(0), boardId: bugBoard } })
+    const r = await req(`/api/posts/${other.body?.id}/attachments`, { method: 'POST', as: app, body: filePart('x.txt', 'text/plain', 'x') })
+    return { ok: r.status === 404, detail: String(r.status) }
+  })
+  await step('the app cannot delete a file; the author can', async () => {
+    const a = await req(`/api/posts/${postId}/attachments/${attIds[1]}`, { method: 'DELETE', as: app })
+    const b = await req(`/api/posts/${postId}/attachments/${attIds[1]}`, { method: 'DELETE', as: alice })
+    const left = (await req(`/api/posts/${postId}/attachments`, { as: alice })).body?.data?.length
+    return { ok: is403(a) && b.status === 204 && left === 4, detail: `app ${a.status}, author ${b.status}, ${left} left` }
+  })
+  if (sql) {
+    await step('the real file cannot be fetched from the public file route, however it is spelt', async () => {
+      const [row] = await sql`select storage_key from card_attachment where id = ${attIds[0]!}`
+      const key = row!.storage_key as string
+      const tail = key.slice('private-attachments/'.length)
+      const variants = [
+        `/api/files/${key}`,
+        `/api/files/${key.toUpperCase()}`,
+        `/api/files//${key}`,
+        `/api/files/uploads/../${key}`,
+        `/api/files/%70rivate-attachments/${tail}`,
+        `/api/files/%2570rivate-attachments/${tail}`,
+        `/api/files/private-attachments%2F${tail}`,
+        `/API/FILES/${key}`,
+      ]
+      const codes: number[] = []
+      for (const v of variants) codes.push((await fetch(`${BASE}${v}`)).status)
+      return { ok: codes.every(c => c !== 200), detail: codes.join(',') }
+    })
+    await step('a file past its 90 days is gone from the list and the download', async () => {
+      await sql`update card_attachment set expires_at = now() - interval '1 minute' where id = ${attIds[2]!}`
+      const list = (await req(`/api/posts/${postId}/attachments`, { as: mgr })).body?.data ?? []
+      const d = await req(`/api/posts/${postId}/attachments/${attIds[2]}`, { as: mgr })
+      return { ok: !list.some((x: { id: string }) => x.id === attIds[2]) && d.status === 404, detail: `${list.length} listed, download ${d.status}` }
+    })
+  }
+  await step('deleting the card deletes its attachments', async () => {
+    const del = await req(`/api/admin/posts/${postId}`, { method: 'DELETE', as: mgr })
+    let rows = -1
+    if (sql) rows = Number((await sql`select count(*)::int as n from card_attachment where post_id = ${postId}`)[0]!.n)
+    const list = await req(`/api/posts/${postId}/attachments`, { as: mgr })
+    return { ok: del.status === 204 && list.status === 404 && (rows === -1 || rows === 0), detail: `delete ${del.status}, rows ${rows}` }
+  })
+  await sql?.end()
 
   console.log('\nEnding connections')
   await step('deny: the app is told denied', async () => {

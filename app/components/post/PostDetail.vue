@@ -573,6 +573,7 @@ async function handleShare() {
             </div>
           </div>
         </div>
+        <CardAttachments v-if="post.id && (isPostAuthor || isOrgManager)" :post-id="post.id" />
         <!-- Admins never receive post-thread email, so the card would lie to them. -->
         <PostSubscribeCard v-if="post.id && hasAccount && !isOrgManager && !isMerged" :post-id="post.id" :subscribed="post.subscribed ?? false" @update:subscribed="post.subscribed = $event" />
         <div class="pt-2 flex flex-col gap-2">

@@ -1038,5 +1038,14 @@
       "unbanDesc": "{name} 将可以再次登录。其应用在重新连接前仍保持断开。",
       "done": "完成"
     }
+  },
+  "attachments": {
+    "title": "私密文件",
+    "hint": "只有卡片作者和团队可以看到这些文件。",
+    "deletedOn": "将于 {date} 删除",
+    "delete": "删除",
+    "deleteTitle": "删除此文件？",
+    "deleteDesc": "{name} 将对所有人删除，此操作无法撤销。",
+    "deleteFailed": "无法删除文件"
   }
 }

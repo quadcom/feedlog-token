@@ -1038,5 +1038,14 @@
       "unbanDesc": "{name} will be able to sign in again. Their apps stay disconnected until they connect them again.",
       "done": "Done"
     }
+  },
+  "attachments": {
+    "title": "Private files",
+    "hint": "Only the card's author and the team can see these.",
+    "deletedOn": "deleted {date}",
+    "delete": "Delete",
+    "deleteTitle": "Delete this file?",
+    "deleteDesc": "{name} will be deleted for everyone. This can't be undone.",
+    "deleteFailed": "Couldn't delete the file"
   }
 }

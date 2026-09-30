@@ -113,6 +113,13 @@
       "when": 1790791584323,
       "tag": "0015_app_connection",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790795859166,
+      "tag": "0016_card_attachment",
+      "breakpoints": true
     }
   ]
 }

@@ -30,6 +30,9 @@ export {
   appConnectionRelations,
 } from './connect'
 export {
+  cardAttachment,
+} from './attachment'
+export {
   postSubscription,
 } from './notifications'
 export type { NotificationPayload } from './notifications'
