@@ -288,6 +288,8 @@ function formatExpiresIn(iso: string | null): string {
             </ul>
           </section>
 
+          <ConnectedAppsSection v-if="canManage" />
+
           <!-- Footnote about last owner safeguard -->
           <p class="text-[11px] text-muted-foreground leading-relaxed">
             <Icon name="lucide:shield-check" size="11" class="inline mr-1" />

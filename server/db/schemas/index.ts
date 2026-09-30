@@ -26,6 +26,10 @@ export {
   agentTokenRelations,
 } from './agent'
 export {
+  appConnection,
+  appConnectionRelations,
+} from './connect'
+export {
   postSubscription,
 } from './notifications'
 export type { NotificationPayload } from './notifications'

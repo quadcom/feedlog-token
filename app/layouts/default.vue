@@ -158,6 +158,12 @@ watch(() => route.path, () => { mobileNavOpen.value = false })
                 <Icon name="lucide:key-round" size="16" class="mr-2" />
                 {{ $t('nav.changePassword') }}
               </DropdownMenuItem>
+              <DropdownMenuItem as-child>
+                <NuxtLink :to="localePath('/connect')">
+                  <Icon name="lucide:plug" size="16" class="mr-2" />
+                  {{ $t('connect.menu') }}
+                </NuxtLink>
+              </DropdownMenuItem>
               <DropdownMenuItem @click="handleSignOut">
                 <Icon name="lucide:log-out" size="16" class="mr-2" />
                 {{ $t('common.signOut') }}

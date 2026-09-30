@@ -26,6 +26,19 @@ Not the API-key plugin: its session short-circuits `customSession`, so `orgList`
 the `requireOrgMember` routes refuse the agent. That is by design upstream, not a bug to work
 around.
 
+**Second feature: connected apps** (`local/PLAN-connect-an-app.md`, contract in
+`docs/connect-an-app.md`). Another program — StaXX's bug form — posts as the person using it, after
+they approve a sign-in code. Same mechanism as the agent token, but the session is minted for the
+person's own user and narrowed by `server/middleware/connect-guard.ts` (reads, cards, pictures,
+comments; ten cards an hour unless manager or owner). Its files: `shared/constants/connect.ts`,
+`server/db/schemas/connect.ts`, `server/utils/app-connection.ts`, `server/api/connect/*`,
+`server/api/admin/connections/*`, `server/api/admin/people/*`, the guard, `app/pages/connect.vue`,
+`app/components/settings/ConnectedAppsSection.vue`, `scripts/connect-probe.ts`, plus one line each
+in `server/db/schemas/index.ts`, `app/layouts/default.vue` and
+`app/pages/dashboard/settings/members.vue`, and the `connect` i18n namespace. Built on
+`feat/connect-an-app`, cut from `main` because it reuses the agent-token helpers; no upstream PR
+for now (Adrian, 2026-09-30). `auth.ts` stays untouched here too.
+
 ## Layout, and what goes upstream
 
 One thing lives here: the agent token, server side. Anything that *uses* the board belongs to the
