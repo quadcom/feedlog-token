@@ -1046,6 +1046,14 @@
     "delete": "删除",
     "deleteTitle": "删除此文件？",
     "deleteDesc": "{name} 将对所有人删除，此操作无法撤销。",
-    "deleteFailed": "无法删除文件"
+    "deleteFailed": "无法删除文件",
+    "open": "打开 {name}",
+    "download": "下载",
+    "collapse": "收起",
+    "expand": "展开",
+    "close": "关闭",
+    "wrap": "自动换行",
+    "loading": "加载中…",
+    "loadFailed": "无法打开文件"
   }
 }

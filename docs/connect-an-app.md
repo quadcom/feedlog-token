@@ -147,7 +147,9 @@ a card, 20 uploads an hour a person (managers and owners exempt). Only on the pe
 Files are deleted after 90 days, and with their card. `GET /api/posts/<id>/attachments` lists them
 (`{ data: [ … ] }`) and `GET /api/posts/<id>/attachments/<attachmentId>` downloads one, always as a
 saved file. Anyone who may not see them gets `404`, as if nothing were there. A connected app cannot
-delete an attachment; the person and managers can, from the card page. The app should sanitise
+delete an attachment; the person and managers can, from the card page. On the card page, a text,
+log or JSON file opens in a movable, collapsible window as plain text (a zip still downloads); the
+download address itself is unchanged. The app should sanitise
 before uploading: FeedLog stores the bytes as sent and never looks inside.
 
 **Check the connection.** `GET /api/auth/get-session` returns the person's user record while the

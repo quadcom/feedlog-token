@@ -1046,6 +1046,14 @@
     "delete": "Delete",
     "deleteTitle": "Delete this file?",
     "deleteDesc": "{name} will be deleted for everyone. This can't be undone.",
-    "deleteFailed": "Couldn't delete the file"
+    "deleteFailed": "Couldn't delete the file",
+    "open": "Open {name}",
+    "download": "Download",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "close": "Close",
+    "wrap": "Wrap long lines",
+    "loading": "Loading…",
+    "loadFailed": "Couldn't open the file"
   }
 }

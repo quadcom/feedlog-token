@@ -45,7 +45,9 @@ days. Files: `shared/constants/attachment.ts`, `server/db/schemas/attachment.ts`
 `server/utils/card-attachment.ts`, `server/api/posts/[postId]/attachments/*`,
 `server/middleware/attachment-files-guard.ts` (**load-bearing**: upstream's `/api/files/**` serves
 any stored path to anyone), `server/plugins/attachment-sweep.ts`,
-`app/components/post/CardAttachments.vue`, one line in `PostDetail.vue`, one pattern each in
+`app/components/post/CardAttachments.vue`, `app/components/post/AttachmentWindow.vue` (staff read a
+text file in a draggable, collapsible window on the page; plain text only, never `v-html` —
+`local/PLAN-attachment-viewer.md`), one line in `PostDetail.vue`, one pattern each in
 `connect-guard.ts` and `agent-delete-guard.ts`, and the `attachments` i18n namespace.
 
 ## Layout, and what goes upstream
