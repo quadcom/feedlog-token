@@ -6,7 +6,7 @@ import { post, user } from '#layers/feedlog/server/db/schemas'
 // it to navigate the dashboard. Moderation actions (delete / merge /
 // change-status / update:any) are gated on their own endpoints.
 export default defineEventHandler(async (event): Promise<PagePaginatedList<PostListItem>> => {
-  const { orgId } = await requireOrgMember(event)
+  const { session, orgId } = await requireOrgMember(event)
 
   const query = getQuery(event)
   const sort = (query.sort as string) || 'createdAt'
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event): Promise<PagePaginatedList<PostL
 
   const db = useDB()
 
-  const whereClause = and(...postFilterConditions(parsePostFilter(query, orgId)))
+  const whereClause = and(...postFilterConditions(parsePostFilter(query, orgId, canSeeStaffBoards(session, orgId))))
 
   const sortCol = sort === 'votes' ? post.voteCount : sort === 'comments' ? post.commentCount : post.createdAt
   // The id tiebreaker follows the same direction, or equal-value rows shift between pages.

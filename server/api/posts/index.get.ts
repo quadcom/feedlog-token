@@ -21,6 +21,8 @@ export default defineEventHandler(async (event): Promise<CursorPaginatedList<Pos
 
   // Default: exclude merged posts
   const conditions: any[] = [eq(post.orgId, orgId), isNull(post.mergedTo)]
+  const hidden = visiblePostCondition(session, orgId)
+  if (hidden) conditions.push(hidden)
   if (boardId) conditions.push(eq(post.boardId, boardId))
   if (statuses.length === 1) conditions.push(eq(post.status, statuses[0]!))
   else if (statuses.length > 1) conditions.push(inArray(post.status, statuses))

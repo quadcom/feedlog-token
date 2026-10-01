@@ -28,6 +28,8 @@ export default defineEventHandler(async (event): Promise<RoadmapResponse> => {
   const statusQueries = ROADMAP_STATUSES.map(status => {
     const conditions: any[] = [eq(post.orgId, orgId), eq(post.status, status), isNull(post.mergedTo)]
     if (boardCondition) conditions.push(boardCondition)
+    const hidden = visiblePostCondition(session, orgId)
+    if (hidden) conditions.push(hidden)
 
     return db
       .select({
@@ -56,6 +58,8 @@ export default defineEventHandler(async (event): Promise<RoadmapResponse> => {
   // Query 2: counts per status
   const countConditions: any[] = [eq(post.orgId, orgId), inArray(post.status, [...ROADMAP_STATUSES]), isNull(post.mergedTo)]
   if (boardCondition) countConditions.push(boardCondition)
+  const hiddenCount = visiblePostCondition(session, orgId)
+  if (hiddenCount) countConditions.push(hiddenCount)
 
   const [results, counts] = await Promise.all([
     Promise.all(statusQueries),

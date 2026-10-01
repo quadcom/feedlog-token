@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   // Confirm the parent post belongs to the active org before exposing comments.
   const [postRow] = await db.select({ id: post.id }).from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId))).limit(1)
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId))).limit(1)
   if (!postRow) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }

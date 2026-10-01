@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
       orgId,
       name: body.name,
       description: body.description || null,
+      visibility: body.visibility ?? 'public',
       position: (maxRow?.max ?? -1) + 1,
     })
     .returning()

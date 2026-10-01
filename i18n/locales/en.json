@@ -495,7 +495,9 @@
       "nameRequired": "Board name is required",
       "saveFailed": "Failed to save board",
       "saving": "Saving...",
-      "saveChanges": "Save Changes"
+      "saveChanges": "Save Changes",
+      "staffOnlyLabel": "Staff only",
+      "staffOnlyHint": "Only owners and managers can see this board and its cards. Everyone else sees nothing of it."
     },
     "feedback": {
       "title": "Feedback",

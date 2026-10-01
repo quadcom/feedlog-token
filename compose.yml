@@ -43,6 +43,8 @@ services:
       - OPENAI_API_KEY
       - OPENAI_BASE_URL
       - OPENAI_TEXT_MODEL
+      # user id that StaXX error reports are filed as; unset = intake answers 503
+      - STAXX_REPORTER_USER_ID
       - EMAIL_PROVIDER
       - RESEND_API_KEY
       - EMAIL_FROM

@@ -41,7 +41,7 @@ export async function requireAttachmentAccess(event: H3Event, postId: string) {
   if ((session.user as { isAnonymous?: boolean | null }).isAnonymous) throw notFound()
 
   const [card] = await useDB().select({ id: post.id, authorId: post.authorId }).from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId))).limit(1)
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId))).limit(1)
   if (!card) throw notFound()
 
   const isStaff = STAFF_ROLES.has(getOrgMemberRole(session, orgId) ?? '')

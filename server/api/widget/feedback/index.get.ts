@@ -23,7 +23,7 @@ export default defineEventHandler(async (event): Promise<CursorPaginatedList<Wid
   const cursor = query.cursor as string | undefined
   const pageSize = Math.min(Number(query.pageSize) || 20, 50)
 
-  const conditions = [eq(post.orgId, orgId), eq(post.authorId, userId)]
+  const conditions = [eq(post.orgId, orgId), eq(post.authorId, userId), visiblePostCondition(session, orgId)]
 
   if (cursor) {
     const decoded = decodeCursor(cursor)
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event): Promise<CursorPaginatedList<Wid
   const [totalRow] = await useDB()
     .select({ value: count() })
     .from(post)
-    .where(and(eq(post.orgId, orgId), eq(post.authorId, userId)))
+    .where(and(eq(post.orgId, orgId), eq(post.authorId, userId), visiblePostCondition(session, orgId)))
 
   return { data, total: Number(totalRow?.value ?? 0), pagination: { nextCursor } }
 })

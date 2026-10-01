@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     .select({ id: comment.id, authorId: comment.authorId, postOrgId: post.orgId })
     .from(comment)
     .leftJoin(post, eq(comment.postId, post.id))
-    .where(and(eq(comment.id, id), eq(post.orgId, orgId)))
+    .where(and(eq(comment.id, id), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .limit(1)
 
   if (!existing) {

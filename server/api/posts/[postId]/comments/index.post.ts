@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   // Verify post exists, belongs to org, and is not merged.
   const [p] = await db.select({ id: post.id, authorId: post.authorId, mergedTo: post.mergedTo, slug: post.slug, title: post.title }).from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId))).limit(1)
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId))).limit(1)
   if (!p) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }

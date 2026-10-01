@@ -495,7 +495,9 @@
       "nameRequired": "请输入看板名称",
       "saveFailed": "保存看板失败",
       "saving": "保存中……",
-      "saveChanges": "保存更改"
+      "saveChanges": "保存更改",
+      "staffOnlyLabel": "仅限管理人员",
+      "staffOnlyHint": "仅所有者和管理员可以看到此看板及其卡片，其他人看到的是“未找到”。"
     },
     "feedback": {
       "title": "反馈",

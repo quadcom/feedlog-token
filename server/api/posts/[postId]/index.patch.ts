@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const [existing] = await db
     .select({ id: post.id, authorId: post.authorId, title: post.title, content: post.content })
     .from(post)
-    .where(and(eq(post.id, id), eq(post.orgId, orgId)))
+    .where(and(eq(post.id, id), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .limit(1)
 
   if (!existing) {
