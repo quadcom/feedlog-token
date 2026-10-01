@@ -197,10 +197,16 @@ async function main() {
     const c = await req(`/api/posts/search?q=${encodeURIComponent(text)}`, { as: mgr })
     return { ok: ids(a).includes(hiddenCard.id) && ids(b).includes(hiddenCard.id) && ids(c).includes(hiddenCard.id) }
   })
-  await step('similar cards (typed and by card) include it', async () => {
-    const a = await req('/api/posts/similar', { method: 'POST', as: mgr, json: { title: text, limit: 20 } })
-    const b = await req(`/api/posts/${hiddenCard.id}/similar`, { as: mgr })
-    return { ok: ids(a).includes(hiddenCard.id) && b.status === 200 }
+  await step('suggestions never offer a staff card, even to a manager', async () => {
+    const typed = await req('/api/posts/similar', { method: 'POST', as: mgr, json: { title: text, limit: 20 } })
+    const forOpen = await req(`/api/posts/${openCard.id}/similar?limit=10`, { as: mgr })
+    const forStaff = await req(`/api/posts/${hiddenCard.id}/similar?limit=10`, { as: mgr })
+    return {
+      ok: typed.status === 200 && !ids(typed).includes(hiddenCard.id) && ids(typed).includes(openCard.id)
+        && forOpen.status === 200 && !ids(forOpen).includes(hiddenCard.id)
+        && forStaff.status === 200 && ids(forStaff).length === 0,
+      detail: `typed ${ids(typed).length}, for open card ${ids(forOpen).length}, for staff card ${ids(forStaff).length}`,
+    }
   })
   await step('roadmap shows it', async () => {
     const r = await req('/api/roadmap', { as: mgr })
