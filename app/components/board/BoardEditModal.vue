@@ -10,12 +10,14 @@ const { t } = useI18n()
 const isEdit = computed(() => !!props.board)
 const formName = ref('')
 const formDesc = ref('')
+const formStaffOnly = ref(false)
 const submitting = ref(false)
 const error = ref('')
 
 watch(() => props.board, (b) => {
   formName.value = b?.name ?? ''
   formDesc.value = b?.description ?? ''
+  formStaffOnly.value = b?.visibility === 'staff'
   error.value = ''
 })
 
@@ -39,11 +41,13 @@ async function handleSave() {
       await boardStore.updateBoard(props.board.id, {
         name: formName.value.trim(),
         description: formDesc.value.trim() || null,
+        visibility: formStaffOnly.value ? 'staff' : 'public',
       })
     } else {
       await boardStore.createBoard({
         name: formName.value.trim(),
         description: formDesc.value.trim() || undefined,
+        visibility: formStaffOnly.value ? 'staff' : 'public',
       })
     }
     open.value = false
@@ -92,6 +96,13 @@ async function handleSave() {
             class="w-full px-4 py-3 bg-background/60 border border-border rounded-lg text-sm focus:ring-primary focus:border-primary min-h-[140px] resize-y leading-relaxed"
           />
         </div>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input v-model="formStaffOnly" type="checkbox" class="mt-1" />
+          <span>
+            <span class="text-sm font-bold block">{{ $t('dashboard.boards.staffOnlyLabel') }}</span>
+            <span class="text-xs text-muted-foreground block">{{ $t('dashboard.boards.staffOnlyHint') }}</span>
+          </span>
+        </label>
         <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
       </div>
 

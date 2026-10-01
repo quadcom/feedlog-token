@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   // Confirm post belongs to this org (defence in depth)
   const [p0] = await db.select({ id: post.id }).from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId))).limit(1)
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId))).limit(1)
   if (!p0) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }

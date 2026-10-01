@@ -1,10 +1,10 @@
-import { eq, desc, sql } from 'drizzle-orm'
+import { and, eq, desc, sql } from 'drizzle-orm'
 import { post, user } from '#layers/feedlog/server/db/schemas'
 
 // GET /api/admin/posts/authors — candidate values for the Author filter.
 // Not narrowed by the active filters, and merged posts count toward the total.
 export default defineEventHandler(async (event) => {
-  const { orgId } = await requireOrgMember(event)
+  const { session, orgId } = await requireOrgMember(event)
 
   const db = useDB()
   const total = sql<number>`cast(count(*) as int)`
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(post)
     .leftJoin(user, eq(post.authorId, user.id))
-    .where(eq(post.orgId, orgId))
+    .where(and(eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .groupBy(post.authorId, user.name, user.email, user.image)
     .orderBy(desc(total), desc(post.authorId))
 

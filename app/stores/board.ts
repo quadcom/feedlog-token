@@ -28,13 +28,13 @@ export const useBoardStore = defineStore('board', () => {
   }
 
   // Admin: create
-  async function createBoard(data: { name: string; description?: string }) {
+  async function createBoard(data: { name: string; description?: string; visibility?: 'public' | 'staff' }) {
     await useApiFetch('/api/admin/boards', { method: 'POST', body: data })
     await fetchBoards(countStatuses.value)
   }
 
   // Admin: update
-  async function updateBoard(id: string, data: { name?: string; description?: string | null }) {
+  async function updateBoard(id: string, data: { name?: string; description?: string | null; visibility?: 'public' | 'staff' }) {
     await useApiFetch(`/api/admin/boards/${id}`, { method: 'PATCH', body: data })
     await fetchBoards(countStatuses.value)
   }

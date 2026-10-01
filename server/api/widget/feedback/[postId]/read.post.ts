@@ -18,7 +18,7 @@ export default defineEventHandler(async (event): Promise<{ ok: true, count: numb
   const [target] = await db
     .select({ id: post.id })
     .from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId), eq(post.authorId, userId)))
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), eq(post.authorId, userId), visiblePostCondition(session, orgId)))
     .limit(1)
   if (!target) {
     throw createError({ statusCode: 404, message: 'Feedback not found' })

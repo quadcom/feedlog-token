@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   let rows
   if (embedding) {
     rows = await searchPostsBySemantic(embedding, {
-      filter: { orgId, merged: 'canonical_only' },
+      filter: { orgId, merged: 'canonical_only', includeStaffBoards: canSeeStaffBoards(session, orgId) },
       limit: PUBLIC_SEARCH_LIMIT,
     })
   }
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
       .from(post)
       .innerJoin(postSearch, eq(post.id, postSearch.postId))
       .leftJoin(user, eq(post.authorId, user.id))
-      .where(and(eq(post.orgId, orgId), isNull(post.mergedTo)))
+      .where(and(eq(post.orgId, orgId), isNull(post.mergedTo), visiblePostCondition(session, orgId)))
       .orderBy(sql`${postSearch.searchText} <-> ${q}`)
       .limit(PUBLIC_SEARCH_LIMIT)
   }

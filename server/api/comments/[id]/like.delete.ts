@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     .select({ id: comment.id })
     .from(comment)
     .leftJoin(post, eq(comment.postId, post.id))
-    .where(and(eq(comment.id, commentId), eq(post.orgId, orgId)))
+    .where(and(eq(comment.id, commentId), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .limit(1)
   if (!scope) {
     throw createError({ statusCode: 404, message: 'Comment not found' })

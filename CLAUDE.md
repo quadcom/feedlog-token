@@ -50,6 +50,22 @@ text file in a draggable, collapsible window on the page; plain text only, never
 `local/PLAN-attachment-viewer.md`), one line in `PostDetail.vue`, one pattern each in
 `connect-guard.ts` and `agent-delete-guard.ts`, and the `attachments` i18n namespace.
 
+**Fourth: StaXX error intake and hidden boards** (`local/PLAN-error-intake.md`, contract in
+`docs/staxx-error-intake.md`). Used by StaXX's `PLAN_212`: when a StaXX server meets a Docker Compose
+error it cannot explain, it posts one sanitised line, automatically and with no sign-in, to
+`POST /api/apps/staxx/error-report`. One card is filed per distinct error on a board called **Error
+explanations**, which is `staff`-only. Two parts: (1) `board.visibility` (`public` | `staff`); a staff
+board and everything on it is invisible to anyone but managers and owners, 404 on direct reads, and
+the board settings page chooses it. (2) The intake itself: `server/api/apps/staxx/error-report.post.ts`,
+tables `staxx_error_server` and `staxx_error_shape` (in `server/db/schemas/index.ts`), rate limits
+(10 a day per server ID, 30 per address), and manager-only blocking at
+`server/api/admin/staxx/servers/*` (list, `[id]/block`, `[id]/unblock`; no dashboard page). Cards are
+filed as the user in the env var **`STAXX_REPORTER_USER_ID`** (an agent-token account named
+"StaXX error reporter"); the board **Error explanations** must exist or the intake answers 503.
+The one place that decides who sees a staff board is `server/utils/hidden-board.ts` (each listing route adds its condition, so a forgotten route is visible in review). Probe: `scripts/error-intake-probe.ts` (also covers the hidden board by role). `STAXX_REPORTER_USER_ID` is passed through `compose.yml` and listed in `.env.example`. Built on
+`feat/error-intake`, cut from `main` and merged into `main` by Adrian; **fork-private, not an
+upstream PR** (Adrian, 2026-10-01). `auth.ts` stays untouched.
+
 ## Layout, and what goes upstream
 
 One thing lives here: the agent token, server side. Anything that *uses* the board belongs to the

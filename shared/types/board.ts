@@ -4,6 +4,8 @@ export interface BoardItem {
   name: string
   description: string | null
   position: number
+  // 'staff' boards are visible to owners and managers only.
+  visibility: 'public' | 'staff'
   postCount: number
   createdAt: string
 }

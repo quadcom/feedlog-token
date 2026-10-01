@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<PostDetail> => {
     })
     .from(post)
     .leftJoin(user, eq(post.authorId, user.id))
-    .where(and(eq(post.slug, slug), eq(post.orgId, orgId)))
+    .where(and(eq(post.slug, slug), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .limit(1)
 
   if (!row) {
@@ -95,7 +95,7 @@ export default defineEventHandler(async (event): Promise<PostDetail> => {
     const [cp] = await db
       .select({ slug: post.slug, title: post.title })
       .from(post)
-      .where(eq(post.id, row.mergedTo))
+      .where(and(eq(post.id, row.mergedTo), visiblePostCondition(session, orgId)))
       .limit(1)
     if (cp) canonicalPost = cp
   }

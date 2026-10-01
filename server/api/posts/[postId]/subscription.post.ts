@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
 
   const [p] = await db.select({ id: post.id }).from(post)
-    .where(and(eq(post.id, postId), eq(post.orgId, orgId))).limit(1)
+    .where(and(eq(post.id, postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId))).limit(1)
   if (!p) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }

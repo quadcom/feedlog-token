@@ -23,13 +23,14 @@ export default defineEventHandler(async (event) => {
     : body.title
 
   const userId = session?.user.id
+  const includeStaffBoards = canSeeStaffBoards(session, orgId)
   const plainText = stripMarkdown(text)
   const limit = body.limit ?? 3
 
   if (isEmbeddingEnabled()) {
     try {
       const embedding = await generateEmbedding(plainText)
-      const data = await searchSimilarByEmbedding(embedding, { orgId, limit, userId })
+      const data = await searchSimilarByEmbedding(embedding, { orgId, limit, userId, includeStaffBoards })
       return { data }
     } catch {
       // Embedding failed, fall through to trgm
@@ -37,6 +38,6 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fallback to pg_trgm
-  const data = await searchSimilarByTrgm(plainText, { orgId, limit, userId })
+  const data = await searchSimilarByTrgm(plainText, { orgId, limit, userId, includeStaffBoards })
   return { data }
 })

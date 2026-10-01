@@ -17,6 +17,9 @@ export interface PostFilter {
   createdFrom?: Date
   createdTo?: Date
   merged?: 'canonical_only' | 'merged_only' | 'all'
+  // Cards on a staff-only board are left out unless the caller is staff (hidden-board.ts).
+  // Hiding is the default so a new caller cannot leak them by forgetting to say so.
+  includeStaffBoards?: boolean
 }
 
 function list(v: unknown): string[] | undefined {
@@ -31,13 +34,14 @@ function date(v: unknown): Date | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d
 }
 
-export function parsePostFilter(query: Record<string, unknown>, orgId: string): PostFilter {
+export function parsePostFilter(query: Record<string, unknown>, orgId: string, includeStaffBoards = false): PostFilter {
   const statusNot = list(query['status!'])
   const boardIdNot = list(query['boardId!'])
   const authorIdNot = list(query['author!'])
 
   return {
     orgId,
+    includeStaffBoards,
     status: statusNot ? undefined : list(query.status),
     statusNot,
     boardId: boardIdNot ? undefined : list(query.boardId),
@@ -78,6 +82,8 @@ export function postFilterConditions(f: PostFilter): SQL[] {
 
   if (f.status?.length) conditions.push(inArray(post.status, f.status))
   if (f.statusNot?.length) conditions.push(notInArray(post.status, f.statusNot))
+
+  if (!f.includeStaffBoards) conditions.push(notOnStaffBoard(post.boardId))
 
   const board = boardCondition(f)
   if (board) conditions.push(board)

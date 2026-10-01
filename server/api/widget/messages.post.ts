@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { board, conversation, message, organizationWidget } from '#layers/feedlog/server/db/schemas'
 import { buildWidgetSystemPrompt, historyToMessages, parseWidgetAiResponse, parseWidgetHistory } from '#layers/feedlog/server/utils/widget-ai'
 import { CONVERSATION_TOKEN_BUDGET, estimateTokens, isConversationId, ownedConversation } from '#layers/feedlog/server/utils/conversation'
@@ -114,7 +114,8 @@ export default defineEventHandler(async (event): Promise<WidgetMessageResponse> 
   const boards = await db
     .select({ id: board.id, name: board.name, description: board.description })
     .from(board)
-    .where(eq(board.orgId, orgId))
+        // Staff-only boards are never offered to the assistant: it would name them to visitors and file their feedback there.
+    .where(and(eq(board.orgId, orgId), eq(board.visibility, 'public')))
     .orderBy(asc(board.position))
 
   const apiKey = process.env.OPENAI_API_KEY

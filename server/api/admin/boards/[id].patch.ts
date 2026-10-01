@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name
   if (body.description !== undefined) updates.description = body.description || null
+  if (body.visibility !== undefined) updates.visibility = body.visibility
 
   if (Object.keys(updates).length === 0) {
     throw createError({ statusCode: 400, message: 'No fields to update' })

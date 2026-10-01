@@ -9,11 +9,11 @@ import { post, postSearch, user } from '#layers/feedlog/server/db/schemas'
 const ADMIN_SEARCH_LIMIT = 50
 
 export default defineEventHandler(async (event): Promise<PagePaginatedList<PostListItem>> => {
-  const { orgId } = await requireOrgMember(event)
+  const { session, orgId } = await requireOrgMember(event)
 
   const query = getQuery(event)
   const q = ((query.q as string | undefined) ?? '').trim()
-  const filter = parsePostFilter(query, orgId)
+  const filter = parsePostFilter(query, orgId, canSeeStaffBoards(session, orgId))
 
   const db = useDB()
 

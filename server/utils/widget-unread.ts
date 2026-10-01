@@ -13,7 +13,7 @@ export async function countWidgetBadge(orgId: string, userId: string): Promise<{
     .select({ value: count() })
     .from(postUnread)
     .innerJoin(post, eq(post.id, postUnread.postId))
-    .where(and(eq(postUnread.userId, userId), eq(post.orgId, orgId)))
+    .where(and(eq(postUnread.userId, userId), eq(post.orgId, orgId), notOnStaffBoard(post.boardId)))
 
   const [threads] = await db
     .select({ value: count() })

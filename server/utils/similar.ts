@@ -7,6 +7,8 @@ interface SimilarSearchOptions {
   excludePostId?: string
   limit?: number
   userId?: string // for hasVoted check
+  // Cards on staff-only boards are left out unless the caller is staff (hidden-board.ts).
+  includeStaffBoards?: boolean
 }
 
 export interface SimilarPost {
@@ -31,6 +33,7 @@ export async function searchSimilarByEmbedding(
   const vectorStr = `[${embedding.join(',')}]`
 
   const conditions = [eq(post.orgId, orgId), isNull(post.mergedTo)]
+  if (!options.includeStaffBoards) conditions.push(notOnStaffBoard(post.boardId))
   if (excludePostId) conditions.push(ne(post.id, excludePostId))
 
   const rows = await db
@@ -66,6 +69,7 @@ export async function searchSimilarByTrgm(
   const db = useDB()
 
   const conditions = [eq(post.orgId, orgId), isNull(post.mergedTo)]
+  if (!options.includeStaffBoards) conditions.push(notOnStaffBoard(post.boardId))
   if (excludePostId) conditions.push(ne(post.id, excludePostId))
 
   const rows = await db

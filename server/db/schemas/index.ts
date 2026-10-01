@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, integer, timestamp, index, uniqueIndex, primaryKey, jsonb, customType } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, varchar, integer, timestamp, index, uniqueIndex, primaryKey, jsonb, customType, boolean } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
@@ -73,10 +73,42 @@ export const board = pgTable('board', {
   name: varchar({ length: 100 }).notNull(),
   description: text(),
   position: integer().notNull().default(0),
+  // 'staff' hides the board and everything on it from anyone who is not a manager or owner.
+  visibility: varchar({ length: 10 }).$type<'public' | 'staff'>().notNull().default('public'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, (t) => [
   index('idx_board_org_position').on(t.orgId, t.position),
+])
+
+// Servers that have sent StaXX error reports (local/PLAN-error-intake.md). A blocked id is
+// answered as if accepted but nothing is filed.
+export const staxxErrorServer = pgTable('staxx_error_server', {
+  id: varchar({ length: 64 }).primaryKey(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+  lastAddress: varchar('last_address', { length: 64 }),
+  blocked: boolean().notNull().default(false),
+  reportCount: integer('report_count').notNull().default(0),
+})
+
+// One row per distinct error shape; points at the card filed for it.
+export const staxxErrorShape = pgTable('staxx_error_shape', {
+  hash: varchar({ length: 64 }).primaryKey(),
+  postId: uuid('post_id').notNull(),
+  shape: varchar({ length: 300 }).notNull(),
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+  serversSeen: integer('servers_seen').notNull().default(1),
+})
+
+// Which server has reported which shape, so a repeat from the same server is not counted twice.
+export const staxxErrorSighting = pgTable('staxx_error_sighting', {
+  serverId: varchar('server_id', { length: 64 }).notNull(),
+  hash: varchar({ length: 64 }).notNull(),
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.serverId, t.hash] }),
 ])
 
 export const post = pgTable('post', {

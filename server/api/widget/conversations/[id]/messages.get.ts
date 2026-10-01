@@ -47,7 +47,7 @@ export default defineEventHandler(async (event): Promise<{ data: WidgetConversat
       boardName: board.name,
     })
     .from(message)
-    .leftJoin(post, and(eq(post.id, message.postId), eq(post.orgId, orgId)))
+    .leftJoin(post, and(eq(post.id, message.postId), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
     .leftJoin(board, eq(board.id, post.boardId))
     .where(eq(message.conversationId, id))
     .orderBy(asc(message.createdAt), asc(message.id))
