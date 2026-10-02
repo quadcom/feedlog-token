@@ -110,8 +110,8 @@ async function main() {
   await req(`/api/admin/posts/${hiddenCard.id}`, { method: 'PATCH', as: mgr, json: { status: 'planned' } })
   await req(`/api/admin/posts/${openCard.id}`, { method: 'PATCH', as: mgr, json: { status: 'planned' } })
   const hiddenComment = await req(`/api/posts/${hiddenCard.id}/comments`, { method: 'POST', as: mgr, json: { content: `Staff note ${tag}` } })
-  await step('manager files a card and a comment on each board', async () => ({
-    ok: !!hiddenCard?.id && !!openCard?.id && hiddenComment.status === 201,
+  await step('manager files a card on each board and the staff board refuses a comment', async () => ({
+    ok: !!hiddenCard?.id && !!openCard?.id && hiddenComment.status === 403,
     detail: `comment ${hiddenComment.status}`,
   }))
 
@@ -216,11 +216,11 @@ async function main() {
     const r = await req('/api/admin/posts?pageSize=100', { as: mgr })
     return { ok: ids(r).includes(hiddenCard.id) }
   })
-  await step('direct read, comments, vote and comment all work', async () => {
+  await step('direct read works; a staff board takes no comments or votes (empty list, 403)', async () => {
     const a = await req(`/api/posts/${hiddenCard.slug}`, { as: mgr })
     const b = await req(`/api/posts/${hiddenCard.id}/comments`, { as: mgr })
     const c = await req(`/api/posts/${hiddenCard.id}/vote`, { method: 'POST', as: mgr })
-    return { ok: a.status === 200 && b.status === 200 && (b.body?.data ?? []).length >= 1 && c.status === 200, detail: `${a.status}/${b.status}/${c.status}` }
+    return { ok: a.status === 200 && b.status === 200 && (b.body?.data ?? []).length === 0 && c.status === 403, detail: `${a.status}/${b.status}/${c.status}` }
   })
   await step('widget "my feedback" lists it for its author', async () => {
     const r = await req('/api/widget/feedback', { as: mgr })

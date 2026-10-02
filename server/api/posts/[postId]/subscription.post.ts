@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!p) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }
+  await assertNotStaffBoard(postId)
   if (isActorAdmin(session, orgId)) {
     throw createError({ statusCode: 403, message: 'Admins do not subscribe to posts' })
   }

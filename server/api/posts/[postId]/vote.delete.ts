@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }
 
+  await assertNotStaffBoard(postId)
+
   // Delete vote
   const [deleted] = await db
     .delete(vote)

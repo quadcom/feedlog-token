@@ -100,6 +100,14 @@ export const staxxErrorShape = pgTable('staxx_error_shape', {
   firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   serversSeen: integer('servers_seen').notNull().default(1),
+  // Every accepted report, repeats included.
+  reportCount: integer('report_count').notNull().default(0),
+  // Set by PATCH /api/admin/staxx/shapes/:postId once an explanation exists and ships.
+  explanationId: varchar('explanation_id', { length: 64 }),
+  explanationTitle: varchar('explanation_title', { length: 200 }),
+  writtenAt: timestamp('written_at', { withTimezone: true }),
+  releasedAt: timestamp('released_at', { withTimezone: true }),
+  releaseRef: varchar('release_ref', { length: 64 }),
 })
 
 // Which server has reported which shape, so a repeat from the same server is not counted twice.

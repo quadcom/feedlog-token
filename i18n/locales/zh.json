@@ -76,6 +76,7 @@
     "noMatches": "没有匹配“{query}”的结果",
     "noMatchesHint": "还没有人提过 —— 来做第一个吧。",
     "comments": "{n} 条评论",
+    "releasedOn": "发布于 {date}",
     "loading": "加载中……",
     "loadMore": "加载更多",
     "poweredBy": "技术支持 "
@@ -222,6 +223,21 @@
         "contentRequired": "请填写内容",
         "submitFailed": "提交失败"
       }
+    },
+    "explain": {
+      "waiting": "等待中",
+      "released": "已发布",
+      "message": "Docker 的消息",
+      "firstSeen": "首次出现",
+      "lastSeen": "最近出现",
+      "servers": "遇到的服务器数",
+      "reports": "报告数",
+      "explanation": "说明",
+      "notWritten": "尚未撰写",
+      "written": "撰写时间",
+      "releasedToStable": "发布到稳定版",
+      "notReleased": "尚未发布",
+      "viewCommit": "查看提交"
     },
     "similar": {
       "finding": "正在查找相似反馈",

@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
   if (!p) {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }
+  await assertNotStaffBoard(postId)
   if (p.mergedTo) {
     throw createError({ statusCode: 403, message: 'Cannot vote on a merged post' })
   }

@@ -67,6 +67,8 @@ export default defineEventHandler(async (event): Promise<CursorPaginatedList<Pos
       authorImage: user.image,
       authorIsAnonymous: user.isAnonymous,
       createdAt: post.createdAt,
+      // Only staff-board "Explain:" cards have a shape row; the list shows it as the Released date.
+      releasedAt: sql<string | null>`(SELECT to_char(s.released_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') FROM staxx_error_shape s WHERE s.post_id = ${post.id})`,
     })
     .from(post)
     .leftJoin(user, eq(post.authorId, user.id))
@@ -103,6 +105,7 @@ export default defineEventHandler(async (event): Promise<CursorPaginatedList<Pos
     hasVoted: votedPostIds.has(r.id),
     author: { id: r.authorId, name: r.authorName, image: r.authorImage, isAnonymous: !!r.authorIsAnonymous },
     createdAt: r.createdAt,
+    ...(r.releasedAt ? { releasedAt: r.releasedAt } : {}),
   }))
 
   const lastItem = data[data.length - 1]

@@ -1,5 +1,5 @@
 import { eq, and, sql } from 'drizzle-orm'
-import { post, user, vote } from '#layers/feedlog/server/db/schemas'
+import { post, staxxErrorShape, user, vote } from '#layers/feedlog/server/db/schemas'
 
 // GET /api/posts/:slug — Get post detail
 export default defineEventHandler(async (event): Promise<PostDetail> => {
@@ -100,6 +100,24 @@ export default defineEventHandler(async (event): Promise<PostDetail> => {
     if (cp) canonicalPost = cp
   }
 
+  // Staff-board cards are shown as a record; see local/PLAN-explain-card-view.md.
+  let explain: PostExplain | undefined
+  if (await isStaffBoardPost(row.id)) {
+    const [s] = await db.select().from(staxxErrorShape).where(eq(staxxErrorShape.postId, row.id)).limit(1)
+    explain = {
+      shape: s?.shape ?? null,
+      firstSeenAt: s?.firstSeenAt?.toISOString() ?? null,
+      lastSeenAt: s?.lastSeenAt?.toISOString() ?? null,
+      serversSeen: s?.serversSeen ?? null,
+      reportCount: s?.reportCount ?? null,
+      explanationId: s?.explanationId ?? null,
+      explanationTitle: s?.explanationTitle ?? null,
+      writtenAt: s?.writtenAt?.toISOString() ?? null,
+      releasedAt: s?.releasedAt?.toISOString() ?? null,
+      releaseRef: s?.releaseRef ?? null,
+    }
+  }
+
   return {
     id: row.id,
     slug: row.slug,
@@ -123,5 +141,6 @@ export default defineEventHandler(async (event): Promise<PostDetail> => {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     canonicalPost,
+    ...(explain ? { explain } : {}),
   }
 })
