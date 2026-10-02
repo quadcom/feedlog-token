@@ -10,7 +10,10 @@ await callOnce(() => boardStore.fetchBoards())
 
 // SSR: fetch via useFetch (payload auto-transferred), then hydrate store on both sides
 const { data: postData } = await useFetch<PostDetail>(`/api/posts/${slug}`)
-if (postData.value) {
+// A hidden card must look exactly like a missing one, so both go to the front page
+if (!postData.value) {
+  await navigateTo(localePath('/'), { redirectCode: 302 })
+} else {
   store.setPost(slug, postData.value)
 }
 
