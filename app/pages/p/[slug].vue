@@ -12,9 +12,10 @@ await callOnce(() => boardStore.fetchBoards())
 const { data: postData } = await useFetch<PostDetail>(`/api/posts/${slug}`)
 // A hidden card must look exactly like a missing one, so both go to the front page
 if (!postData.value) {
-  return navigateTo(localePath('/'), { redirectCode: 302 })
+  await navigateTo(localePath('/'), { redirectCode: 302 })
+} else {
+  store.setPost(slug, postData.value)
 }
-store.setPost(slug, postData.value)
 
 const postId = computed(() => postData.value?.id)
 const { data: commentsData } = await useFetch<{ data: CommentItem[]; pagination: { nextCursor: string | null } }>(
