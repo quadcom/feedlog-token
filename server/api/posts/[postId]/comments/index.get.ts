@@ -24,6 +24,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Post not found' })
   }
 
+  // A staff-board card has no discussion.
+  if (await isStaffBoardPost(postId)) return { data: [], pagination: { nextCursor: null } }
+
   const adminIds = await resolveAdminAuthorIds(orgId)
 
   // Loading child comments for a specific parent

@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   // Confirm the comment lives in this org via its parent post.
   const [scope] = await db
-    .select({ id: comment.id })
+    .select({ id: comment.id, postId: comment.postId })
     .from(comment)
     .leftJoin(post, eq(comment.postId, post.id))
     .where(and(eq(comment.id, commentId), eq(post.orgId, orgId), visiblePostCondition(session, orgId)))
@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
   if (!scope) {
     throw createError({ statusCode: 404, message: 'Comment not found' })
   }
+  await assertNotStaffBoard(scope.postId)
 
   // Check if already liked
   const [existing] = await db

@@ -76,6 +76,7 @@
     "noMatches": "No matches for “{query}”",
     "noMatchesHint": "Nobody’s raised this yet — be the first.",
     "comments": "{n} comments",
+    "releasedOn": "Released {date}",
     "loading": "Loading...",
     "loadMore": "Load More",
     "poweredBy": "Powered by "
@@ -222,6 +223,21 @@
         "contentRequired": "Content is required",
         "submitFailed": "Failed to submit"
       }
+    },
+    "explain": {
+      "waiting": "Waiting",
+      "released": "Released",
+      "message": "Docker's message",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "servers": "Servers that met it",
+      "reports": "Reports",
+      "explanation": "Explanation",
+      "notWritten": "Not written yet",
+      "written": "Written",
+      "releasedToStable": "Released to stable",
+      "notReleased": "Not released yet",
+      "viewCommit": "View commit"
     },
     "similar": {
       "finding": "Finding Similar Posts",

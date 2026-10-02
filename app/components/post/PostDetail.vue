@@ -66,6 +66,34 @@ const boardName = computed(() => {
   return boardStore.boardMap.get(post.value.boardId) ?? null
 })
 
+// ---- Staff-board record view (local/PLAN-explain-card-view.md) ----
+// A card on a staff board is a record, not a conversation: no votes, comments, follow card or
+// similar posts, and two states worded Waiting / Released.
+const explain = computed(() => post.value?.explain ?? null)
+const stateOptions = computed(() => explain.value
+  ? STATUS_OPTIONS.filter(o => o.value === 'open' || o.value === 'done')
+  : STATUS_OPTIONS)
+function stateLabel(status: string): string {
+  if (!explain.value) return t(statusLabelKey(status))
+  return status === 'done' ? t('post.explain.released') : t('post.explain.waiting')
+}
+function shortDate(iso: string | null): string {
+  return iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
+}
+const explainRows = computed(() => {
+  const e = explain.value
+  if (!e) return []
+  return [
+    { label: t('post.explain.message'), value: e.shape ?? '', mono: true },
+    { label: t('post.explain.firstSeen'), value: shortDate(e.firstSeenAt) },
+    { label: t('post.explain.lastSeen'), value: shortDate(e.lastSeenAt) },
+    { label: t('post.explain.servers'), value: e.serversSeen == null ? '' : String(e.serversSeen) },
+    { label: t('post.explain.reports'), value: e.reportCount == null ? '' : String(e.reportCount) },
+    { label: t('post.explain.explanation'), value: e.explanationId ? `${e.explanationTitle ?? ''} (${e.explanationId})` : t('post.explain.notWritten') },
+    { label: t('post.explain.written'), value: shortDate(e.writtenAt) },
+  ].filter(r => r.value)
+})
+
 // ---- Post editing state ----
 const editing = ref(false)
 const editTitle = ref('')
@@ -388,7 +416,7 @@ async function handleShare() {
       <!-- Post card -->
       <div class="bg-card border border-border rounded-lg p-6 lg:p-8 shadow-sm">
         <div class="flex flex-col md:flex-row gap-6">
-          <div v-if="!isMerged" class="flex flex-row md:flex-col items-center gap-3 shrink-0">
+          <div v-if="!isMerged && !explain" class="flex flex-row md:flex-col items-center gap-3 shrink-0">
             <button
               class="upvote-btn w-14 h-[72px] rounded-md flex flex-col items-center justify-center gap-1 shadow-md border transition-transform hover:scale-105"
               :class="post.hasVoted
@@ -449,7 +477,23 @@ async function handleShare() {
                   </DropdownMenu>
                 </div>
               </div>
-              <PostContent v-if="post.content" :content="post.content" />
+              <dl v-if="explain" class="space-y-3">
+                <div v-for="r in explainRows" :key="r.label">
+                  <dt class="font-heading text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{{ r.label }}</dt>
+                  <dd class="text-sm break-words" :class="r.mono ? 'font-mono' : ''">{{ r.value }}</dd>
+                </div>
+                <div>
+                  <dt class="font-heading text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{{ $t('post.explain.releasedToStable') }}</dt>
+                  <dd class="text-sm">
+                    <template v-if="explain.releasedAt">
+                      {{ shortDate(explain.releasedAt) }}
+                      <a v-if="explain.releaseRef" :href="`https://github.com/quadcom/Staxx/commit/${explain.releaseRef}`" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline ml-2">{{ $t('post.explain.viewCommit') }} ({{ explain.releaseRef.slice(0, 7) }})</a>
+                    </template>
+                    <template v-else>{{ $t('post.explain.notReleased') }}</template>
+                  </dd>
+                </div>
+              </dl>
+              <PostContent v-else-if="post.content" :content="post.content" />
               <div v-else class="h-20 bg-muted rounded animate-pulse" />
             </template>
           </div>
@@ -457,7 +501,7 @@ async function handleShare() {
       </div>
 
       <!-- Discussion -->
-      <div class="space-y-4">
+      <div v-if="!explain" class="space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="font-heading text-lg font-bold flex items-center gap-2">
             <Icon name="lucide:message-square" size="20" /> {{ $t('post.detail.discussion', { count: post.commentCount }) }}
@@ -525,22 +569,22 @@ async function handleShare() {
             <DropdownMenuTrigger as-child>
               <button class="flex items-center gap-3 hover:bg-secondary/50 p-2 -ml-2 rounded-md transition-colors">
                 <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: `var(${(STATUS_CONFIG[post.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.open).cssVar})` }" />
-                <span class="font-bold text-sm">{{ $t(statusLabelKey(post.status)) }}</span><Icon name="lucide:chevron-down" size="14" class="text-muted-foreground" />
+                <span class="font-bold text-sm">{{ stateLabel(post.status) }}</span><Icon name="lucide:chevron-down" size="14" class="text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" class="min-w-[160px]">
-              <DropdownMenuItem v-for="opt in STATUS_OPTIONS" :key="opt.value" class="text-xs font-medium gap-2" :class="post.status === opt.value ? 'font-bold' : ''" @click="handleStatusChange(opt.value)">
+              <DropdownMenuItem v-for="opt in stateOptions" :key="opt.value" class="text-xs font-medium gap-2" :class="post.status === opt.value ? 'font-bold' : ''" @click="handleStatusChange(opt.value)">
                 <span class="w-4 shrink-0 flex items-center justify-center"><Icon v-if="post.status === opt.value" name="lucide:check" size="12" /></span>
-                <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: `var(${opt.cssVar})` }"></div> {{ $t(statusLabelKey(opt.value)) }}
+                <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: `var(${opt.cssVar})` }"></div> {{ stateLabel(opt.value) }}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <div v-else class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: `var(${(STATUS_CONFIG[post.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.open).cssVar})` }" />
-            <span class="font-bold text-sm">{{ $t(statusLabelKey(post.status)) }}</span>
+            <span class="font-bold text-sm">{{ stateLabel(post.status) }}</span>
           </div>
           <StatusNotifyPrompt
-            v-if="notifyStatus"
+            v-if="notifyStatus && !explain"
             class="mt-2"
             :actor-name="session?.user?.name"
             :actor-image="session?.user?.image"
@@ -575,12 +619,12 @@ async function handleShare() {
         </div>
         <CardAttachments v-if="post.id && (isPostAuthor || isOrgManager)" :post-id="post.id" />
         <!-- Admins never receive post-thread email, so the card would lie to them. -->
-        <PostSubscribeCard v-if="post.id && hasAccount && !isOrgManager && !isMerged" :post-id="post.id" :subscribed="post.subscribed ?? false" @update:subscribed="post.subscribed = $event" />
+        <PostSubscribeCard v-if="post.id && hasAccount && !isOrgManager && !isMerged && !explain" :post-id="post.id" :subscribed="post.subscribed ?? false" @update:subscribed="post.subscribed = $event" />
         <div class="pt-2 flex flex-col gap-2">
           <Button variant="outline" class="text-primary" :disabled="isMerged" :class="isMerged ? 'opacity-50 cursor-not-allowed' : ''" @click="handleShare"><Icon name="lucide:share-2" size="18" /> {{ $t('post.detail.shareRequest') }}</Button>
         </div>
       </div>
-      <SimilarPostsPanel v-if="post.id && !isMerged" :post-id="post.id" :is-admin="isOrgManager" @merge="handleSimilarMerge" />
+      <SimilarPostsPanel v-if="post.id && !isMerged && !explain" :post-id="post.id" :is-admin="isOrgManager" @merge="handleSimilarMerge" />
     </aside>
 
     <!-- Merge dialog -->

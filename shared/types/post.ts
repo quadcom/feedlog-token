@@ -86,6 +86,8 @@ export interface PostListItem {
   hasVoted: boolean
   author: PostAuthor
   createdAt: string
+  // Staff-board "Explain:" cards only.
+  releasedAt?: string
 }
 
 // Detail (includes content, excludes excerpt)
@@ -106,4 +108,19 @@ export interface PostDetail {
   createdAt: string
   updatedAt: string
   canonicalPost?: { slug: string; title: string }
+  // Present only for a post on a staff board (and so only for staff).
+  explain?: PostExplain
+}
+
+export interface PostExplain {
+  shape: string | null
+  firstSeenAt: string | null
+  lastSeenAt: string | null
+  serversSeen: number | null
+  reportCount: number | null
+  explanationId: string | null
+  explanationTitle: string | null
+  writtenAt: string | null
+  releasedAt: string | null
+  releaseRef: string | null
 }

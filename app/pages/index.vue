@@ -18,6 +18,11 @@ const timeAgo = useTimeAgo()
 // Board store
 const boardStore = useBoardStore()
 const { boards, boardMap, totalPostCount } = storeToRefs(boardStore)
+// Cards on a staff board are records: no vote button or comment count, and the state reads
+// Waiting / Released (local/PLAN-explain-card-view.md).
+const staffBoardIds = computed(() => new Set(boards.value.filter(b => b.visibility === 'staff').map(b => b.id)))
+const isRecord = (p: { boardId: string | null }) => !!p.boardId && staffBoardIds.value.has(p.boardId)
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 
 // Currently selected board and sort order
 const route = useRoute()
@@ -472,6 +477,7 @@ async function handleVote(post: PostListItem) {
       >
         <!-- Upvote button -->
         <button
+          v-if="!isRecord(p)"
           class="upvote-btn w-[56px] h-[64px] shrink-0 rounded-md flex flex-col items-center justify-center gap-1 border focus:outline-none"
           :class="p.hasVoted
             ? 'bg-primary text-primary-foreground border-primary shadow-sm'
@@ -497,8 +503,9 @@ async function handleVote(post: PostListItem) {
                 borderColor: `var(${STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG].cssVar}-border)`,
               }"
             >
-              {{ $t(statusLabelKey(p.status)) }}
+              {{ isRecord(p) ? $t('post.explain.released') : $t(statusLabelKey(p.status)) }}
             </span>
+            <span v-else-if="isRecord(p)" class="text-xs font-medium text-muted-foreground">{{ $t('post.explain.waiting') }}</span>
             <span v-if="p.boardId && boardMap.get(p.boardId)" class="text-xs font-medium text-muted-foreground">
               {{ p.status && p.status !== 'open' ? '•' : '' }} {{ boardMap.get(p.boardId) }}
             </span>
@@ -521,9 +528,13 @@ async function handleVote(post: PostListItem) {
 
           <!-- Bottom meta -->
           <div class="flex items-center gap-4 mt-3 text-xs text-muted-foreground font-medium">
-            <div class="flex items-center gap-1.5">
+            <div v-if="!isRecord(p)" class="flex items-center gap-1.5">
               <Icon name="lucide:message-square" size="14" />
               <span>{{ $t('board.comments', { n: p.commentCount }) }}</span>
+            </div>
+            <div v-else-if="p.releasedAt" class="flex items-center gap-1.5">
+              <Icon name="lucide:check" size="14" />
+              <span>{{ $t('board.releasedOn', { date: shortDate(p.releasedAt) }) }}</span>
             </div>
             <div class="flex items-center gap-2">
               <UserAvatar :author="p.author" :size="5" />

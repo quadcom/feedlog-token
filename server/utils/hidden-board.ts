@@ -35,3 +35,18 @@ export function notOnStaffBoard(boardIdColumn: SQL | { name: string } | unknown)
 export function postVisibleById(postIdColumn: unknown): SQL {
   return sql`NOT EXISTS (SELECT 1 FROM post hp JOIN board hb ON hb.id = hp.board_id WHERE hp.id = ${postIdColumn} AND hb.visibility = 'staff')`
 }
+
+// Cards on a staff board are records, not conversations (local/PLAN-explain-card-view.md): the
+// write routes for comments, votes and subscriptions call this after their own 404 check, so
+// staff are refused too. Reads of such a post are unchanged.
+export async function isStaffBoardPost(postId: string): Promise<boolean> {
+  const [row] = await useDB().select({ hit: sql<number>`1` }).from(post)
+    .where(sql`${post.id} = ${postId} AND NOT (${postVisibleById(post.id)})`).limit(1)
+  return !!row
+}
+
+export async function assertNotStaffBoard(postId: string): Promise<void> {
+  if (await isStaffBoardPost(postId)) {
+    throw createError({ statusCode: 403, message: 'This board does not take comments or votes.' })
+  }
+}

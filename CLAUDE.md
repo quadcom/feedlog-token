@@ -65,6 +65,10 @@ filed as the user in the env var **`STAXX_REPORTER_USER_ID`** (an agent-token ac
 The one place that decides who sees a staff board is `server/utils/hidden-board.ts` (each listing route adds its condition, so a forgotten route is visible in review). Probe: `scripts/error-intake-probe.ts` (also covers the hidden board by role). `STAXX_REPORTER_USER_ID` is passed through `compose.yml` and listed in `.env.example`. Built on
 `feat/error-intake`, cut from `main` and merged into `main` by Adrian; **fork-private, not an
 upstream PR** (Adrian, 2026-10-01). `auth.ts` stays untouched.
+**Fifth, on `feat/explain-card-view`** (`local/PLAN-explain-card-view.md`): a card on a staff board is shown
+as a record (`explain` object on the post detail, fields on `staxx_error_shape`, migration 0018), takes no
+comments, votes or follows (`assertNotStaffBoard()` in `hidden-board.ts`, 403), and the explanation is
+recorded through `PATCH /api/admin/staxx/shapes/:postId`. Probe: `scripts/explain-card-probe.ts`.
 
 ## Layout, and what goes upstream
 

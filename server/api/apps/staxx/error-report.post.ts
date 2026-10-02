@@ -142,7 +142,7 @@ export default defineEventHandler(async (event) => {
       const [fresh] = await db.insert(staxxErrorSighting).values({ serverId, hash }).onConflictDoNothing().returning({ hash: staxxErrorSighting.hash })
       const firstFromThisServer = !!fresh
       const servers = row.serversSeen + (firstFromThisServer ? 1 : 0)
-      await db.update(staxxErrorShape).set({ serversSeen: servers, lastSeenAt: now }).where(eq(staxxErrorShape.hash, hash))
+      await db.update(staxxErrorShape).set({ serversSeen: servers, lastSeenAt: now, reportCount: sql`${staxxErrorShape.reportCount} + 1` }).where(eq(staxxErrorShape.hash, hash))
       if (firstFromThisServer) {
         const [card] = await db.select({ title: post.title, content: post.content }).from(post).where(eq(post.id, row.postId)).limit(1)
         if (card) {
@@ -166,7 +166,7 @@ export default defineEventHandler(async (event) => {
       subscribeAuthor: false,
     })
     await db.insert(staxxErrorSighting).values({ serverId, hash }).onConflictDoNothing()
-    await db.insert(staxxErrorShape).values({ hash, postId: created.id, shape: body.shape, firstSeenAt: now, lastSeenAt: now, serversSeen: 1 }).onConflictDoNothing()
+    await db.insert(staxxErrorShape).values({ hash, postId: created.id, shape: body.shape, firstSeenAt: now, lastSeenAt: now, serversSeen: 1, reportCount: 1 }).onConflictDoNothing()
     return created
   })
 
